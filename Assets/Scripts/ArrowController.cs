@@ -32,7 +32,8 @@ public class ArrowController : MonoBehaviour {
             r.material.color = new Color(1f, 0.5f, 0.5f);
         Fire();
     }
-	
+
+    float lifetime = 15f;
 	// Update is called once per frame
 	void Update () {
         if (isMoving)
@@ -44,16 +45,69 @@ public class ArrowController : MonoBehaviour {
             transform.position += moveAmount;
             RaycastHit hit;
             if (Physics.Raycast(transform.position, transform.forward, out hit, r.bounds.size.z / 2 + 0.2f, 1 << 10))
-                OnCollision();
+                OnCollision(hit.collider);
+            lifetime -= Time.deltaTime;
+            if (lifetime <= 0)
+                Destroy(gameObject);
         }
     }
 
-    void OnCollision()
+    void OnCollision(Collider c)
     {
         Debug.Log("Collided!");
         isMoving = false;
         transform.Translate(0f, 0f, 0.15f, Space.Self);
+        transform.SetParent(c.transform);
+
+        var enemy = c.gameObject.GetComponent<EnemyController>();
+        if (enemy == null)
+            enemy = c.gameObject.GetComponentInParent<EnemyController>();
+        if (enemy != null)
+        {
+            if (c.gameObject.name == "Head")
+            {
+                enemy.Damage(2);
+                if (arrowType == ArrowType.Blue)
+                    HeadBlue();
+                else if (arrowType == ArrowType.Red)
+                    HeadRed();
+            }
+            else
+            {
+                enemy.Damage(1);
+                if (arrowType == ArrowType.Blue)
+                    BodyBlue();
+                else if (arrowType == ArrowType.Red)
+                    BodyRed();
+            }
+        }
+        else Debug.LogWarning("Error! Can't find 'EnemyController' script on the target!");
     }
+
+    #region Hit Actions -- EDIT
+    void HeadBlue()
+    {
+        Debug.Log("Enemy Hit: Blue + Head");
+        // Action Code
+    }
+
+    void HeadRed()
+    {
+        Debug.Log("Enemy Hit: Red + Head");
+        // Action Code
+    }
+
+    void BodyBlue()
+    {
+        Debug.Log("Enemy Hit: Blue + Body");
+        // Action Code
+    }
+
+    void BodyRed()
+    {
+        Debug.Log("Enemy Hit: Red + Body");
+    }
+    #endregion
 }
 
 public enum ArrowType { Blue, Red }
